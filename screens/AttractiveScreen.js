@@ -1,4 +1,4 @@
-// screens/AttractiveScreen.js
+// screens/AttractiveScreen.js - DISEÑO RENOVADO 2025
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -11,6 +11,7 @@ import {
   Modal,
   Animated,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -20,7 +21,7 @@ import { attractivesData } from '../data/attractivesData';
 
 const { width, height } = Dimensions.get('window');
 
-export default function AttractiveScreen() {
+export default function AttractiveScreen({ navigation }) {
   const [searchText, setSearchText] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('todos');
   const [selectedAttractive, setSelectedAttractive] = useState(null);
@@ -28,10 +29,10 @@ export default function AttractiveScreen() {
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   const filters = [
-    { id: 'todos', label: 'Todos', icon: 'grid-outline' },
-    { id: 'montaña', label: 'Montaña', icon: 'mountain-outline' },
-    { id: 'agua', label: 'Agua', icon: 'water-outline' },
-    { id: 'naturaleza', label: 'Naturaleza', icon: 'leaf-outline' },
+    { id: 'todos', label: 'Todos', icon: 'grid-outline', count: attractivesData.length },
+    { id: 'montaña', label: 'Sierras', icon: 'triangle-outline', count: attractivesData.filter(item => item.categoria === 'montaña').length }, // 👈 Cambié a triangle-outline
+    { id: 'agua', label: 'Agua', icon: 'water-outline', count: attractivesData.filter(item => item.categoria === 'agua').length },
+    { id: 'naturaleza', label: 'Naturaleza', icon: 'leaf-outline', count: attractivesData.filter(item => item.categoria === 'naturaleza').length },
   ];
 
   const filteredAttractions = attractivesData.filter(item => {
@@ -63,42 +64,69 @@ export default function AttractiveScreen() {
     });
   };
 
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case 'Baja': return '#10b981';
+      case 'Media': return '#f59e0b';
+      case 'Alta': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  const getDifficultyBg = (difficulty) => {
+    switch (difficulty) {
+      case 'Baja': return '#dcfce7';
+      case 'Media': return '#fef3c7';
+      case 'Alta': return '#fee2e2';
+      default: return '#f3f4f6';
+    }
+  };
+
   const AttractionCard = ({ item, index }) => {
     return (
       <TouchableOpacity
-        style={[styles.attractionCard, { marginTop: index % 2 === 1 ? 20 : 0 }]}
+        style={styles.attractionCard} // 👈 Quité el margin condicional
         onPress={() => openModal(item)}
         activeOpacity={0.9}
       >
         <View style={styles.cardImageContainer}>
           <Image
-            source={item.imagen}
+            source={{ uri: item.imagen }}
             style={styles.cardImage}
             contentFit="cover"
           />
           
-          {/* Gradient overlay */}
+          {/* Gradient overlay MEJORADO para mejor contraste */}
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']} // 👈 Más oscuro abajo
             style={styles.cardImageOverlay}
           />
           
           {/* Duration badge */}
-          <BlurView intensity={30} style={styles.durationBadge}>
+          <BlurView intensity={40} style={styles.durationBadge}>
             <Ionicons name="time-outline" size={12} color="#fff" />
             <Text style={styles.durationText}>{item.duracion}</Text>
           </BlurView>
+
+          {/* Category badge - CORREGIDO */}
+          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.categoria) }]}>
+            <Ionicons name={getCategoryIcon(item.categoria)} size={14} color="#fff" />
+          </View>
         </View>
 
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle} numberOfLines={2}>{item.titulo}</Text>
-            <View style={[styles.difficultyBadge, 
-              item.dificultad === 'Alta' && styles.difficultyHigh,
-              item.dificultad === 'Media' && styles.difficultyMedium,
-              item.dificultad === 'Baja' && styles.difficultyLow
+            <View style={[
+              styles.difficultyBadge, 
+              { 
+                backgroundColor: getDifficultyBg(item.dificultad),
+                borderColor: getDifficultyColor(item.dificultad)
+              }
             ]}>
-              <Text style={styles.difficultyText}>{item.dificultad}</Text>
+              <Text style={[styles.difficultyText, { color: getDifficultyColor(item.dificultad) }]}>
+                {item.dificultad}
+              </Text>
             </View>
           </View>
 
@@ -108,14 +136,14 @@ export default function AttractiveScreen() {
 
           <View style={styles.cardFooter}>
             <View style={styles.locationContainer}>
-              <Ionicons name="location-outline" size={14} color="#64748b" />
+              <Ionicons name="location-outline" size={14} color="#6b7280" />
               <Text style={styles.locationText} numberOfLines={1}>
                 {item.ubicacion}
               </Text>
             </View>
             
             <TouchableOpacity style={styles.viewButton}>
-              <Ionicons name="arrow-forward" size={16} color="#3b82f6" />
+              <Ionicons name="arrow-forward" size={16} color="#10b981" />
             </TouchableOpacity>
           </View>
         </View>
@@ -123,33 +151,67 @@ export default function AttractiveScreen() {
     );
   };
 
+  const getCategoryColor = (category) => {
+    switch (category) {
+      case 'montaña': return '#8b5cf6';
+      case 'agua': return '#06b6d4';
+      case 'naturaleza': return '#10b981';
+      default: return '#6b7280';
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'montaña': return 'triangle'; // 👈 Cambié mountain por triangle
+      case 'agua': return 'water';
+      case 'naturaleza': return 'leaf';
+      default: return 'location';
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#00add5" />
+      <StatusBar barStyle="light-content" backgroundColor="#10b981" />
       
-      {/* Header con search */}
+      {/* HEADER MODERNO */}
       <LinearGradient
-        colors={['#00add5', '#0ea5e9']}
+        colors={['#10b981', '#059669']}
         style={styles.header}
       >
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <Text style={styles.headerTitle}>Atractivos</Text>
+          
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="map-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* SEARCH BAR MODERNO */}
         <BlurView intensity={20} style={styles.searchContainer}>
-          <Ionicons name="search-outline" size={20} color="#64748b" />
+          <Ionicons name="search-outline" size={20} color="#6b7280" />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar atractivos..."
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#9ca3af"
             value={searchText}
             onChangeText={setSearchText}
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={() => setSearchText('')}>
-              <Ionicons name="close-circle" size={20} color="#64748b" />
+              <Ionicons name="close-circle" size={20} color="#6b7280" />
             </TouchableOpacity>
           )}
         </BlurView>
       </LinearGradient>
 
-      {/* Filters */}
+      {/* FILTERS MEJORADOS */}
       <View style={styles.filtersContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.filtersRow}>
@@ -165,7 +227,7 @@ export default function AttractiveScreen() {
                 <Ionicons 
                   name={filter.icon} 
                   size={16} 
-                  color={selectedFilter === filter.id ? '#fff' : '#64748b'} 
+                  color={selectedFilter === filter.id ? '#fff' : '#6b7280'} 
                 />
                 <Text style={[
                   styles.filterText,
@@ -173,40 +235,71 @@ export default function AttractiveScreen() {
                 ]}>
                   {filter.label}
                 </Text>
+                <View style={[
+                  styles.filterCount,
+                  selectedFilter === filter.id && styles.filterCountActive
+                ]}>
+                  <Text style={[
+                    styles.filterCountText,
+                    selectedFilter === filter.id && styles.filterCountTextActive
+                  ]}>
+                    {filter.count}
+                  </Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
       </View>
 
-      {/* Results count */}
+      {/* RESULTS COUNT */}
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsText}>
-          {filteredAttractions.length} atractivos encontrados
+          {filteredAttractions.length} {filteredAttractions.length === 1 ? 'atractivo encontrado' : 'atractivos encontrados'}
         </Text>
+        
+        {selectedFilter !== 'todos' && (
+          <TouchableOpacity 
+            style={styles.clearFilter}
+            onPress={() => setSelectedFilter('todos')}
+          >
+            <Text style={styles.clearFilterText}>Limpiar filtro</Text>
+            <Ionicons name="close" size={14} color="#10b981" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Attractions Grid */}
+      {/* ATTRACTIONS GRID MEJORADO */}
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.attractionsContainer}
       >
-        <View style={styles.attractionsGrid}>
-          {filteredAttractions.map((item, index) => (
-            <AttractionCard key={item.id} item={item} index={index} />
-          ))}
-        </View>
+        {filteredAttractions.length > 0 ? (
+          <View style={styles.attractionsGrid}>
+            {filteredAttractions.map((item, index) => (
+              <AttractionCard key={item.id} item={item} index={index} />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="search-outline" size={64} color="#d1d5db" />
+            <Text style={styles.emptyTitle}>No se encontraron atractivos</Text>
+            <Text style={styles.emptySubtitle}>
+              Prueba con una búsqueda diferente o cambia el filtro
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* Modal de detalle */}
+      {/* MODAL MEJORADO */}
       <Modal
         visible={modalVisible}
         transparent
         animationType="fade"
         onRequestClose={closeModal}
       >
-        <BlurView intensity={40} style={styles.modalOverlay}>
+        <BlurView intensity={50} style={styles.modalOverlay}>
           <TouchableOpacity 
             style={styles.modalBackground}
             activeOpacity={1}
@@ -224,7 +317,7 @@ export default function AttractiveScreen() {
                     {/* Modal Header */}
                     <View style={styles.modalHeader}>
                       <Image
-                        source={selectedAttractive.imagen}
+                        source={{ uri: selectedAttractive.imagen }}
                         style={styles.modalImage}
                         contentFit="cover"
                       />
@@ -236,7 +329,7 @@ export default function AttractiveScreen() {
                         style={styles.closeButton}
                         onPress={closeModal}
                       >
-                        <BlurView intensity={30} style={styles.closeButtonBlur}>
+                        <BlurView intensity={40} style={styles.closeButtonBlur}>
                           <Ionicons name="close" size={24} color="#fff" />
                         </BlurView>
                       </TouchableOpacity>
@@ -244,12 +337,12 @@ export default function AttractiveScreen() {
                       <View style={styles.modalHeaderContent}>
                         <Text style={styles.modalTitle}>{selectedAttractive.titulo}</Text>
                         <View style={styles.modalBadges}>
-                          <BlurView intensity={30} style={styles.modalBadge}>
+                          <BlurView intensity={40} style={styles.modalBadge}>
                             <Ionicons name="time-outline" size={14} color="#fff" />
                             <Text style={styles.modalBadgeText}>{selectedAttractive.duracion}</Text>
                           </BlurView>
-                          <BlurView intensity={30} style={styles.modalBadge}>
-                            <Ionicons name="location-outline" size={14} color="#fff" />
+                          <BlurView intensity={40} style={[styles.modalBadge, { backgroundColor: getDifficultyColor(selectedAttractive.dificultad) + '80' }]}>
+                            <Ionicons name="trending-up-outline" size={14} color="#fff" />
                             <Text style={styles.modalBadgeText}>{selectedAttractive.dificultad}</Text>
                           </BlurView>
                         </View>
@@ -264,7 +357,9 @@ export default function AttractiveScreen() {
                       
                       <View style={styles.modalInfoGrid}>
                         <View style={styles.modalInfoItem}>
-                          <Ionicons name="location-outline" size={20} color="#3b82f6" />
+                          <View style={styles.modalInfoIcon}>
+                            <Ionicons name="location-outline" size={20} color="#10b981" />
+                          </View>
                           <View style={styles.modalInfoText}>
                             <Text style={styles.modalInfoLabel}>Ubicación</Text>
                             <Text style={styles.modalInfoValue}>{selectedAttractive.ubicacion}</Text>
@@ -272,7 +367,9 @@ export default function AttractiveScreen() {
                         </View>
                         
                         <View style={styles.modalInfoItem}>
-                          <Ionicons name="map-outline" size={20} color="#10b981" />
+                          <View style={styles.modalInfoIcon}>
+                            <Ionicons name="map-outline" size={20} color="#3b82f6" />
+                          </View>
                           <View style={styles.modalInfoText}>
                             <Text style={styles.modalInfoLabel}>Cómo llegar</Text>
                             <Text style={styles.modalInfoValue}>{selectedAttractive.comoLlegar}</Text>
@@ -280,6 +377,19 @@ export default function AttractiveScreen() {
                         </View>
                       </View>
                     </ScrollView>
+
+                    {/* Modal Footer */}
+                    <View style={styles.modalFooter}>
+                      <TouchableOpacity style={styles.modalActionButton}>
+                        <LinearGradient
+                          colors={['#10b981', '#059669']}
+                          style={styles.modalActionGradient}
+                        >
+                          <Ionicons name="navigate-outline" size={20} color="#fff" />
+                          <Text style={styles.modalActionText}>Cómo llegar</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </View>
                   </>
                 )}
               </TouchableOpacity>
@@ -297,37 +407,64 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
 
-  // Header Styles
+  // HEADER STYLES
   header: {
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 20,
     paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.3)',
     overflow: 'hidden',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#1e293b',
+    color: '#1f2937',
     fontWeight: '500',
   },
 
-  // Filters Styles
+  // FILTERS STYLES
   filtersContainer: {
     paddingVertical: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#f1f5f9',
   },
   filtersRow: {
     flexDirection: 'row',
@@ -338,39 +475,71 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
     gap: 6,
   },
   filterChipActive: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: '#10b981',
+    borderColor: '#10b981',
   },
   filterText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748b',
+    color: '#6b7280',
   },
   filterTextActive: {
     color: '#fff',
   },
+  filterCount: {
+    backgroundColor: '#e2e8f0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  filterCountActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  filterCountText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6b7280',
+  },
+  filterCountTextActive: {
+    color: '#fff',
+  },
 
-  // Results Styles
+  // RESULTS STYLES
   resultsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
   resultsText: {
     fontSize: 14,
-    color: '#64748b',
+    color: '#6b7280',
     fontWeight: '500',
   },
+  clearFilter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clearFilterText: {
+    fontSize: 14,
+    color: '#10b981',
+    fontWeight: '600',
+  },
 
-  // Attractions Grid Styles
+  // ATTRACTIONS GRID STYLES
   scrollView: {
     flex: 1,
   },
@@ -382,10 +551,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 16,
   },
   attractionCard: {
-    width: (width - 52) / 2,
+    width: (width - 52) / 2, // 👈 Asegurar que sea exactamente la mitad menos margins
     backgroundColor: '#fff',
     borderRadius: 20,
     shadowColor: '#000',
@@ -394,6 +562,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
     overflow: 'hidden',
+    marginBottom: 16, // 👈 Margin bottom constante
   },
   cardImageContainer: {
     height: 140,
@@ -424,8 +593,26 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700', // 👈 Más bold para que se vea mejor
     color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.5)', // 👈 Sombra en el texto
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  categoryBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 28, // 👈 Más grande
+    height: 28, // 👈 Más grande
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000', // 👈 Sombra para que se vea mejor
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   cardContent: {
     padding: 16,
@@ -439,8 +626,8 @@ const styles = StyleSheet.create({
   cardTitle: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontWeight: '800', // 👈 Más bold
+    color: '#111827', // 👈 Más oscuro para mejor contraste
     marginRight: 8,
     lineHeight: 20,
   },
@@ -448,21 +635,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: '#e2e8f0',
+    borderWidth: 1,
   },
-  difficultyHigh: { backgroundColor: '#fee2e2' },
-  difficultyMedium: { backgroundColor: '#fef3c7' },
-  difficultyLow: { backgroundColor: '#dcfce7' },
   difficultyText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#64748b',
   },
   cardDescription: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#374151', // 👈 Más oscuro para mejor legibilidad
     lineHeight: 18,
     marginBottom: 12,
+    fontWeight: '500', // 👈 Agregué peso
   },
   cardFooter: {
     flexDirection: 'row',
@@ -477,19 +661,40 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
+    color: '#374151', // 👈 Más oscuro para mejor contraste
+    fontWeight: '600', // 👈 Más bold
   },
   viewButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f0fdf4',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  // Modal Styles
+  // EMPTY STATE
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#374151',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+
+  // MODAL STYLES
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -504,7 +709,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    maxHeight: height * 0.8,
+    maxHeight: height * 0.85,
     backgroundColor: '#fff',
     borderRadius: 24,
     overflow: 'hidden',
@@ -581,7 +786,7 @@ const styles = StyleSheet.create({
   },
   modalDescription: {
     fontSize: 16,
-    color: '#475569',
+    color: '#374151',
     lineHeight: 24,
     marginBottom: 24,
   },
@@ -593,18 +798,47 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
   },
+  modalInfoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f8fafc',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalInfoText: {
     flex: 1,
   },
   modalInfoLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748b',
+    color: '#6b7280',
     marginBottom: 4,
   },
   modalInfoValue: {
     fontSize: 14,
-    color: '#1e293b',
+    color: '#1f2937',
     lineHeight: 20,
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  modalActionButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  modalActionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  modalActionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
   },
 });
