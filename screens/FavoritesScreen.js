@@ -1,4 +1,4 @@
-// screens/FavoritesScreen.js - MEJORADO COMPLETO
+// screens/FavoritesScreen.js - CON FAVORITE TOAST INTEGRADO
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -19,16 +19,19 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useFavoriteToast } from '../components/common/FavoriteToast'; // 👈 IMPORTAR EL TOAST
 
 const { width, height } = Dimensions.get('window');
 
 export default function FavoritesScreen({ navigation }) {
-  const { favorites, toggleFavorite, clearAllFavorites } = useFavorites();
+  const { favorites, toggleFavorite, clearAllFavorites, isFavorite } = useFavorites();
+  const { showToast, ToastComponent } = useFavoriteToast(); // 👈 USAR EL HOOK DEL TOAST
+  
   const [selectedFilter, setSelectedFilter] = useState('todos');
-  const [searchText, setSearchText] = useState(''); // 👈 NUEVO: Estado del buscador
-  const [selectedFavorite, setSelectedFavorite] = useState(null); // 👈 NUEVO: Estado del modal
-  const [modalVisible, setModalVisible] = useState(false); // 👈 NUEVO: Estado del modal
-  const scaleAnim = useRef(new Animated.Value(0)).current; // 👈 NUEVO: Animación del modal
+  const [searchText, setSearchText] = useState('');
+  const [selectedFavorite, setSelectedFavorite] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
   
   const stats = {
     total: favorites.length,
@@ -49,7 +52,6 @@ export default function FavoritesScreen({ navigation }) {
     { id: 'naturaleza', label: 'Naturaleza', count: stats.categorias.naturaleza || 0 },
   ];
 
-  // 👈 NUEVO: Filtrado con búsqueda Y categoría
   const filteredFavorites = favorites.filter(item => {
     const matchesSearch = item.titulo.toLowerCase().includes(searchText.toLowerCase()) ||
                          item.descripcion.toLowerCase().includes(searchText.toLowerCase());
@@ -57,7 +59,24 @@ export default function FavoritesScreen({ navigation }) {
     return matchesSearch && matchesFilter;
   });
 
-  // 👈 NUEVO: Funciones para el modal
+  // 🎯 FUNCIÓN MEJORADA PARA MANEJAR FAVORITOS CON TOAST
+  const handleToggleFavorite = async (item) => {
+    const wasAdded = !isFavorite(item.id);
+    
+    // Ejecutar la acción de favorito
+    await toggleFavorite(item);
+    
+    // Mostrar el toast con opción de deshacer
+    showToast(
+      wasAdded, 
+      item.titulo,
+      () => {
+        // Función de deshacer
+        toggleFavorite(item);
+      }
+    );
+  };
+
   const openModal = (favorite) => {
     setSelectedFavorite(favorite);
     setModalVisible(true);
@@ -89,7 +108,11 @@ export default function FavoritesScreen({ navigation }) {
         { 
           text: 'Eliminar todo', 
           style: 'destructive',
-          onPress: () => clearAllFavorites()
+          onPress: () => {
+            clearAllFavorites();
+            // Mostrar toast de confirmación
+            showToast(false, 'Todos los favoritos eliminados', null);
+          }
         },
       ]
     );
@@ -117,7 +140,7 @@ export default function FavoritesScreen({ navigation }) {
     <TouchableOpacity 
       style={styles.favoriteCard} 
       activeOpacity={0.9}
-      onPress={() => openModal(item)} // 👈 NUEVO: Abre el modal al tocar
+      onPress={() => openModal(item)}
     >
       <View style={styles.cardImageContainer}>
         <Image
@@ -131,12 +154,12 @@ export default function FavoritesScreen({ navigation }) {
           style={styles.cardImageOverlay}
         />
         
-        {/* 👈 MEJORADO: Botón de favorito que NO abre el modal */}
+        {/* 🎯 BOTÓN DE FAVORITO MEJORADO CON TOAST */}
         <TouchableOpacity 
           style={styles.favoriteButton}
           onPress={(e) => {
-            e.stopPropagation(); // 👈 Evita que se abra el modal
-            toggleFavorite(item);
+            e.stopPropagation();
+            handleToggleFavorite(item); // 👈 USAR LA NUEVA FUNCIÓN
           }}
         >
           <BlurView intensity={40} style={styles.favoriteButtonBlur}>
@@ -214,6 +237,9 @@ export default function FavoritesScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#ef4444" />
       
+      {/* 🎯 TOAST COMPONENT - SE RENDERIZA PRIMERO PARA QUE ESTÉ ENCIMA */}
+      <ToastComponent />
+      
       {/* HEADER */}
       <LinearGradient colors={['#ef4444', '#dc2626']} style={styles.header}>
         <View style={styles.headerTop}>
@@ -236,7 +262,7 @@ export default function FavoritesScreen({ navigation }) {
           )}
         </View>
 
-        {/* 👈 NUEVO: BUSCADOR */}
+        {/* BUSCADOR */}
         {favorites.length > 0 && (
           <BlurView intensity={20} style={styles.searchContainer}>
             <Ionicons name="search-outline" size={20} color="#6b7280" />
@@ -317,7 +343,6 @@ export default function FavoritesScreen({ navigation }) {
               {searchText.length > 0 && ' encontrados'}
             </Text>
             
-            {/* 👈 NUEVO: Limpiar filtros */}
             {(selectedFilter !== 'todos' || searchText.length > 0) && (
               <TouchableOpacity 
                 style={styles.clearFilter}
@@ -366,7 +391,7 @@ export default function FavoritesScreen({ navigation }) {
         )}
       </ScrollView>
 
-      {/* 👈 NUEVO: MODAL COMPLETO */}
+      {/* MODAL COMPLETO */}
       <Modal
         visible={modalVisible}
         transparent
@@ -409,9 +434,10 @@ export default function FavoritesScreen({ navigation }) {
                         </BlurView>
                       </TouchableOpacity>
 
+                      {/* 🎯 BOTÓN DE FAVORITO EN MODAL CON TOAST */}
                       <TouchableOpacity 
                         style={styles.modalFavoriteButton}
-                        onPress={() => toggleFavorite(selectedFavorite)}
+                        onPress={() => handleToggleFavorite(selectedFavorite)} // 👈 USAR LA NUEVA FUNCIÓN
                       >
                         <BlurView intensity={40} style={styles.modalFavoriteButtonBlur}>
                           <Ionicons name="heart" size={24} color="#ef4444" />
@@ -498,7 +524,7 @@ export default function FavoritesScreen({ navigation }) {
         </BlurView>
       </Modal>
 
-      {/* 👈 NUEVO: BOTTOM NAVIGATION */}
+      {/* BOTTOM NAVIGATION */}
       <View style={styles.bottomNav}>
         <BlurView intensity={100} style={styles.bottomNavBlur}>
           {[
@@ -512,8 +538,6 @@ export default function FavoritesScreen({ navigation }) {
               onPress={() => {
                 if (tab.route) {
                   navigation.navigate(tab.route);
-                } else {
-                  // Esta es la pantalla actual (Favoritos)
                 }
               }}
             >
@@ -575,7 +599,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // 👈 NUEVO: Estilos del buscador
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -746,6 +769,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     left: 12,
+    width: 32,
+    height: 32,
     borderRadius: 16,
     overflow: 'hidden',
   },
@@ -756,6 +781,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 16,
   },
   durationBadge: {
     position: 'absolute',
@@ -892,8 +918,6 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '600',
   },
-
-  // 👈 NUEVO: Estilos del modal
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -937,6 +961,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     right: 16,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -945,11 +971,14 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 20,
   },
   modalFavoriteButton: {
     position: 'absolute',
     top: 16,
     left: 16,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -960,6 +989,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 20,
   },
   modalHeaderContent: {
     position: 'absolute',
@@ -1055,8 +1085,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
-
-  // 👈 NUEVO: BOTTOM NAVIGATION STYLES PARA FAVORITOS
   bottomNav: {
     position: 'absolute',
     bottom: 0,
@@ -1082,6 +1110,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   bottomNavLabelActive: {
-    color: '#ef4444', // 👈 Color rojo para Favoritos
+    color: '#ef4444',
   },
 });

@@ -1,4 +1,4 @@
-// screens/AttractiveScreen.js - COMPLETO Y ARREGLADO
+// screens/AttractiveScreen.js - CON FAVORITE TOAST INTEGRADO
 import React, { useState, useRef } from 'react';
 import {
   View,
@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { attractivesData } from '../data/attractivesData';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { useFavoriteToast } from '../components/common/FavoriteToast'; // 👈 IMPORTAR EL TOAST
 
 const { width, height } = Dimensions.get('window');
 
@@ -30,6 +31,7 @@ export default function AttractiveScreen({ navigation }) {
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { showToast, ToastComponent } = useFavoriteToast(); // 👈 USAR EL HOOK DEL TOAST
 
   const filters = [
     { id: 'todos', label: 'Todos', icon: 'grid-outline', count: attractivesData.length },
@@ -65,6 +67,24 @@ export default function AttractiveScreen({ navigation }) {
       setModalVisible(false);
       setSelectedAttractive(null);
     });
+  };
+
+  // 🎯 FUNCIÓN MEJORADA PARA MANEJAR FAVORITOS CON TOAST
+  const handleToggleFavorite = async (item) => {
+    const wasAdded = !isFavorite(item.id);
+    
+    // Ejecutar la acción de favorito
+    await toggleFavorite(item);
+    
+    // Mostrar el toast con opción de deshacer
+    showToast(
+      wasAdded, 
+      item.titulo,
+      () => {
+        // Función de deshacer
+        toggleFavorite(item);
+      }
+    );
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -104,12 +124,12 @@ export default function AttractiveScreen({ navigation }) {
             style={styles.cardImageOverlay}
           />
           
-          {/* Botón de favorito ARREGLADO */}
+          {/* 🎯 BOTÓN DE FAVORITO MEJORADO CON TOAST */}
           <TouchableOpacity 
             style={styles.favoriteButton}
             onPress={(e) => {
               e.stopPropagation();
-              toggleFavorite(item);
+              handleToggleFavorite(item); // 👈 USAR LA NUEVA FUNCIÓN
             }}
           >
             <View style={styles.favoriteButtonContainer}>
@@ -189,6 +209,9 @@ export default function AttractiveScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#10b981" />
+      
+      {/* 🎯 TOAST COMPONENT - SE RENDERIZA PRIMERO PARA QUE ESTÉ ENCIMA */}
+      <ToastComponent />
       
       {/* HEADER MODERNO */}
       <LinearGradient
@@ -351,10 +374,10 @@ export default function AttractiveScreen({ navigation }) {
                         </BlurView>
                       </TouchableOpacity>
 
-                      {/* Botón de favorito en modal ARREGLADO */}
+                      {/* 🎯 BOTÓN DE FAVORITO EN MODAL CON TOAST */}
                       <TouchableOpacity 
                         style={styles.modalFavoriteButton}
-                        onPress={() => toggleFavorite(selectedAttractive)}
+                        onPress={() => handleToggleFavorite(selectedAttractive)} // 👈 USAR LA NUEVA FUNCIÓN
                       >
                         <View style={styles.modalFavoriteButtonContainer}>
                           <Ionicons 
@@ -467,13 +490,12 @@ export default function AttractiveScreen({ navigation }) {
   );
 }
 
+// Los estilos se mantienen exactamente iguales...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
   },
-
-  // HEADER STYLES
   header: {
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 20,
@@ -524,8 +546,6 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     fontWeight: '500',
   },
-
-  // FILTERS STYLES
   filtersContainer: {
     paddingVertical: 16,
     backgroundColor: '#fff',
@@ -579,8 +599,6 @@ const styles = StyleSheet.create({
   filterCountTextActive: {
     color: '#fff',
   },
-
-  // RESULTS STYLES
   resultsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -604,8 +622,6 @@ const styles = StyleSheet.create({
     color: '#10b981',
     fontWeight: '600',
   },
-
-  // ATTRACTIONS GRID STYLES
   scrollView: {
     flex: 1,
   },
@@ -645,8 +661,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: '50%',
   },
-  
-  // 🎯 BOTÓN DE FAVORITO ARREGLADO
   favoriteButton: {
     position: 'absolute',
     top: 12,
@@ -669,7 +683,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
   },
-
   durationBadge: {
     position: 'absolute',
     top: 12,
@@ -763,8 +776,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // EMPTY STATE
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -784,8 +795,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 40,
   },
-
-  // MODAL STYLES
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
@@ -829,6 +838,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     right: 16,
+    width: 40,
+    height: 40,
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -837,9 +848,8 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 20,
   },
-  
-  // 🎯 BOTÓN DE FAVORITO EN MODAL ARREGLADO
   modalFavoriteButton: {
     position: 'absolute',
     top: 16,
@@ -862,7 +872,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
   },
-
   modalHeaderContent: {
     position: 'absolute',
     bottom: 20,
@@ -957,8 +966,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
   },
-
-  // BOTTOM NAVIGATION STYLES
   bottomNav: {
     position: 'absolute',
     bottom: 0,
