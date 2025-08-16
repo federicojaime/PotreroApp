@@ -1,129 +1,132 @@
-// App.js - ACTUALIZADO CON WELCOME Y HOME
+// App.js - SIN HEADER DUPLICADO EN ATRACTIVOS
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 
 // Importar todas las pantallas
 import WelcomeScreen from './screens/WelcomeScreen';
 import HomeScreen from './screens/HomeScreen';
 import AttractiveScreen from './screens/AttractiveScreen';
-
-import { Colors } from './constants/Colors';
+import FavoritesScreen from './screens/FavoritesScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Stack.Navigator
-        initialRouteName="Welcome" // 👈 Empezamos con Welcome
-        screenOptions={{
-          headerShown: false, // 👈 Sin headers por defecto
-          animation: 'slide_from_right', // 👈 Animación suave
-          gestureEnabled: true, // 👈 Gestos de navegación
-        }}
-      >
-        {/* PANTALLA DE BIENVENIDA */}
-        <Stack.Screen 
-          name="Welcome" 
-          component={WelcomeScreen}
-          options={{ 
-            headerShown: false,
-            gestureEnabled: false, // No se puede volver atrás desde Welcome
+    <FavoritesProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <Stack.Navigator
+          initialRouteName="Welcome"
+          screenOptions={{
+            headerShown: false, // 👈 Por defecto sin headers
+            animation: 'slide_from_right',
+            gestureEnabled: true,
           }}
-        />
-        
-        {/* HOME PRINCIPAL */}
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen}
-          options={{ 
-            headerShown: false,
-            gestureEnabled: false, // No se puede volver a Welcome
-          }}
-        />
-        
-        {/* ATRACTIVOS (ya existe) */}
-        <Stack.Screen 
-          name="Attractives" 
-          component={AttractiveScreen}
-          options={{ 
-            title: 'Atractivos',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#00add5',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        
-        {/* PLACEHOLDER SCREENS - Para que no falle cuando navegue */}
-        <Stack.Screen 
-          name="Accommodation" 
-          component={PlaceholderScreen}
-          options={{ 
-            title: 'Alojamiento',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#3b82f6',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        
-        <Stack.Screen 
-          name="Gastronomy" 
-          component={PlaceholderScreen}
-          options={{ 
-            title: 'Gastronomía',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#8b5cf6',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-        
-        <Stack.Screen 
-          name="Activities" 
-          component={PlaceholderScreen}
-          options={{ 
-            title: 'Actividades',
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: '#f59e0b',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+        >
+          {/* PANTALLA DE BIENVENIDA */}
+          <Stack.Screen
+            name="Welcome"
+            component={WelcomeScreen}
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+
+          {/* HOME PRINCIPAL */}
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+
+          <Stack.Screen
+            name="Favorites"
+            component={FavoritesScreen}
+            options={{
+              headerShown: false,
+              gestureEnabled: true,
+            }}
+          />
+
+          {/* ATRACTIVOS - SIN HEADER DEL STACK NAVIGATOR */}
+          <Stack.Screen
+            name="Attractives"
+            component={AttractiveScreen}
+            options={{
+              headerShown: false, // 👈 CAMBIADO: Sin header del Stack Navigator
+              gestureEnabled: true, // 👈 Permite volver con gesto
+            }}
+          />
+
+          {/* PLACEHOLDER SCREENS */}
+          <Stack.Screen
+            name="Accommodation"
+            component={PlaceholderScreen}
+            options={{
+              title: 'Alojamiento',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: '#3b82f6',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          />
+
+          <Stack.Screen
+            name="Gastronomy"
+            component={PlaceholderScreen}
+            options={{
+              title: 'Gastronomía',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: '#8b5cf6',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          />
+
+          <Stack.Screen
+            name="Activities"
+            component={PlaceholderScreen}
+            options={{
+              title: 'Actividades',
+              headerShown: true,
+              headerStyle: {
+                backgroundColor: '#f59e0b',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </FavoritesProvider>
   );
 }
 
-// 🔧 COMPONENTE PLACEHOLDER TEMPORAL
-// Para las pantallas que aún no creamos
+// 🔧 COMPONENTE PLACEHOLDER
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const PlaceholderScreen = ({ navigation, route }) => {
   const screenName = route.name;
-  
+
   const getGradientColors = () => {
     switch (screenName) {
       case 'Accommodation': return ['#3b82f6', '#1e40af'];
@@ -157,12 +160,12 @@ const PlaceholderScreen = ({ navigation, route }) => {
         <View style={placeholderStyles.iconContainer}>
           <Ionicons name={getIcon()} size={80} color="#fff" />
         </View>
-        
+
         <Text style={placeholderStyles.title}>{screenName}</Text>
         <Text style={placeholderStyles.subtitle}>Próximamente</Text>
         <Text style={placeholderStyles.description}>{getDescription()}</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={placeholderStyles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -171,7 +174,7 @@ const PlaceholderScreen = ({ navigation, route }) => {
             <Text style={placeholderStyles.backButtonText}>Volver al inicio</Text>
           </View>
         </TouchableOpacity>
-        
+
         <View style={placeholderStyles.comingSoon}>
           <Ionicons name="time-outline" size={24} color="rgba(255,255,255,0.7)" />
           <Text style={placeholderStyles.comingSoonText}>¡Estamos trabajando en esta sección!</Text>

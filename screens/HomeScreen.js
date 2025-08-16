@@ -1,4 +1,4 @@
-// screens/HomeScreen.js - HOME REAL CON CLIMA INTEGRADO
+// screens/HomeScreen.js - CON TUS IMÁGENES REALES DE ASSETS
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -26,11 +26,14 @@ const HomeScreen = ({ navigation }) => {
         windSpeed: 8.0,
         humidity: 65,
         loading: true,
+        error: null,
     });
 
     // FUNCIÓN PARA OBTENER CLIMA REAL
     const fetchWeather = async () => {
         try {
+            setWeather(prev => ({ ...prev, loading: true, error: null }));
+
             const response = await fetch(
                 'https://api.open-meteo.com/v1/forecast?latitude=-32.5948&longitude=-65.1486&current=temperature_2m,wind_speed_10m,relative_humidity_2m&timezone=America/Argentina/Buenos_Aires'
             );
@@ -42,21 +45,57 @@ const HomeScreen = ({ navigation }) => {
                     windSpeed: Math.round(data.current.wind_speed_10m * 10) / 10,
                     humidity: data.current.relative_humidity_2m || 65,
                     loading: false,
+                    error: null,
                 });
+                console.log('✅ Clima actualizado HomeScreen:', data.current);
+            } else {
+                throw new Error(`HTTP ${response.status}`);
             }
         } catch (error) {
-            console.log('Error clima Welcome:', error);
-            setWeather(prev => ({ ...prev, loading: false }));
+            console.log('❌ Error clima HomeScreen:', error);
+            setWeather(prev => ({
+                ...prev,
+                loading: false,
+                error: error.message,
+            }));
         }
     };
 
-
     useEffect(() => {
         fetchWeather();
+
+        // Actualizar cada 10 minutos
+        const interval = setInterval(fetchWeather, 10 * 60 * 1000);
+
+        return () => clearInterval(interval);
     }, []);
 
+    // FUNCIÓN PARA OBTENER DESCRIPCIÓN DEL CLIMA
+    const getWeatherDescription = () => {
+        if (weather.loading) return 'Cargando...';
+        if (weather.error) return 'Sin conexión';
 
-    // DATOS DE SECCIONES PRINCIPALES
+        const temp = weather.temperature;
+        if (temp >= 25) return 'Caluroso';
+        if (temp >= 20) return 'Agradable';
+        if (temp >= 15) return 'Templado';
+        if (temp >= 10) return 'Fresco';
+        return 'Frío';
+    };
+
+    // FUNCIÓN PARA OBTENER COLOR DEL CLIMA
+    const getWeatherColor = () => {
+        if (weather.loading || weather.error) return '#6b7280';
+
+        const temp = weather.temperature;
+        if (temp >= 25) return '#ef4444'; // Rojo caliente
+        if (temp >= 20) return '#10b981'; // Verde agradable
+        if (temp >= 15) return '#3b82f6'; // Azul templado
+        if (temp >= 10) return '#06b6d4'; // Cyan fresco
+        return '#8b5cf6'; // Púrpura frío
+    };
+
+    // DATOS DE SECCIONES PRINCIPALES - CON TUS IMÁGENES REALES 🖼️
     const mainSections = [
         {
             id: 'attractions',
@@ -64,8 +103,8 @@ const HomeScreen = ({ navigation }) => {
             subtitle: 'Lugares únicos',
             description: 'Lago, sierras y miradores',
             count: '12 lugares',
-            image: require('../assets/images/attractions/atractivos.jpg'), // 👈 Imagen real
-            gradient: ['rgba(16,185,129,0.7)', 'rgba(5,150,105,0.8)'], // 👈 Más transparente
+            image: require('../assets/images/attractions/atractivos.jpg'), // 🖼️ TU IMAGEN REAL
+            gradient: ['rgba(16,185,129,0.7)', 'rgba(5,150,105,0.8)'],
             icon: 'compass-outline',
             route: 'Attractives',
         },
@@ -75,8 +114,8 @@ const HomeScreen = ({ navigation }) => {
             subtitle: 'Dónde dormir',
             description: 'Cabañas, hoteles y apart',
             count: '25+ opciones',
-            image: require('../assets/images/accommodation/alojamiento.jpg'), // 👈 Imagen real
-            gradient: ['rgba(59,130,246,0.7)', 'rgba(30,64,175,0.8)'], // 👈 Más transparente
+            image: require('../assets/images/accommodation/alojamiento.jpg'), // 🖼️ TU IMAGEN REAL
+            gradient: ['rgba(59,130,246,0.7)', 'rgba(30,64,175,0.8)'],
             icon: 'home-outline',
             route: 'Accommodation',
         },
@@ -86,8 +125,8 @@ const HomeScreen = ({ navigation }) => {
             subtitle: 'Dónde comer',
             description: 'Sabores de las sierras',
             count: '15 restaurantes',
-            image: require('../assets/images/gastronomy/gastronomia.jpg'), // 👈 Imagen real
-            gradient: ['rgba(139,92,246,0.7)', 'rgba(124,58,237,0.8)'], // 👈 Más transparente
+            image: require('../assets/images/gastronomy/gastronomia.jpg'), // 🖼️ TU IMAGEN REAL
+            gradient: ['rgba(139,92,246,0.7)', 'rgba(124,58,237,0.8)'],
             icon: 'restaurant-outline',
             route: 'Gastronomy',
         },
@@ -97,21 +136,23 @@ const HomeScreen = ({ navigation }) => {
             subtitle: 'Aventura',
             description: 'Kayak, trekking y ciclismo',
             count: '8 deportes',
-            image: require('../assets/images/activities/actividades.jpg'), // 👈 Imagen real
-            gradient: ['rgba(245,158,11,0.7)', 'rgba(217,119,6,0.8)'], // 👈 Más transparente
+            image: require('../assets/images/activities/actividades.jpg'), // 🖼️ TU IMAGEN REAL
+            gradient: ['rgba(245,158,11,0.7)', 'rgba(217,119,6,0.8)'],
             icon: 'bicycle-outline',
             route: 'Activities',
         },
     ];
 
-    // DATOS RÁPIDOS/INFO
+    // DATOS RÁPIDOS/INFO - USANDO EL CLIMA REAL ✅
     const quickInfo = [
         {
-            icon: 'thermometer-outline',
+            icon: weather.loading ? 'time-outline' : 'thermometer-outline',
             title: 'Clima',
-            value: '22°C',
-            subtitle: 'Perfecto',
-            color: '#fbbf24',
+            value: weather.loading ? '...' : `${weather.temperature}°C`,
+            subtitle: getWeatherDescription(),
+            color: getWeatherColor(),
+            loading: weather.loading,
+            onPress: fetchWeather,
         },
         {
             icon: 'car-outline',
@@ -149,22 +190,19 @@ const HomeScreen = ({ navigation }) => {
             activeOpacity={0.85}
         >
             <Image
-                source={section.image}
+                source={section.image} // 🖼️ USANDO TU IMAGEN REAL CON require()
                 style={styles.sectionImage}
                 contentFit="cover"
             />
 
-            {/* Overlay MUY sutil solo para legibilidad */}
             <LinearGradient
-                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)']} // 👈 Solo gradiente negro sutil
+                colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.6)']}
                 style={styles.sectionOverlay}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
             />
 
-            {/* Content en la parte inferior */}
             <View style={styles.sectionContent}>
-                {/* Badge flotante con glassmorphism */}
                 <View style={styles.sectionBadgeContainer}>
                     <BlurView intensity={40} style={styles.sectionBadge}>
                         <Ionicons name={section.icon} size={16} color="#fff" />
@@ -188,7 +226,12 @@ const HomeScreen = ({ navigation }) => {
     );
 
     const QuickInfoCard = ({ info }) => (
-        <View style={styles.infoCard}>
+        <TouchableOpacity
+            style={styles.infoCard}
+            onPress={info.onPress}
+            disabled={!info.onPress}
+            activeOpacity={info.onPress ? 0.7 : 1}
+        >
             <View style={[styles.infoIcon, { backgroundColor: info.color }]}>
                 {info.loading ? (
                     <ActivityIndicator size="small" color="#fff" />
@@ -199,7 +242,13 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.infoTitle}>{info.title}</Text>
             <Text style={[styles.infoValue, { color: info.color }]}>{info.value}</Text>
             <Text style={styles.infoSubtitle}>{info.subtitle}</Text>
-        </View>
+
+            {info.onPress && (
+                <View style={styles.refreshIndicator}>
+                    <Ionicons name="refresh" size={10} color="#9ca3af" />
+                </View>
+            )}
+        </TouchableOpacity>
     );
 
     return (
@@ -208,7 +257,7 @@ const HomeScreen = ({ navigation }) => {
 
             {/* HEADER */}
             <View style={styles.header}>
-                <View style={styles.headerTop}>
+                   {/*<View style={styles.headerTop}>
                     <View style={styles.locationContainer}>
                         <Ionicons name="location" size={16} color="#10b981" />
                         <Text style={styles.locationText}>Potrero de los Funes</Text>
@@ -223,7 +272,7 @@ const HomeScreen = ({ navigation }) => {
                             <Ionicons name="notifications-outline" size={22} color="#1f2937" />
                         </TouchableOpacity>
                     </View>
-                </View>
+                </View>*/}
 
                 <Text style={styles.welcomeText}>¡Hola! 👋</Text>
                 <Text style={styles.headerTitle}>¿Qué querés explorar hoy?</Text>
@@ -279,7 +328,7 @@ const HomeScreen = ({ navigation }) => {
                     <Text style={styles.sectionHeaderTitle}>Destacado</Text>
                     <TouchableOpacity style={styles.featuredCard} activeOpacity={0.9}>
                         <Image
-                            source={require('../assets/images/attractions/salto-moneda.jpg')} // 👈 Imagen real
+                            source={require('../assets/images/attractions/salto-moneda.jpg')} // 🖼️ TU IMAGEN REAL
                             style={styles.featuredImage}
                             contentFit="cover"
                         />
@@ -309,52 +358,56 @@ const HomeScreen = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* BOTTOM PADDING */}
                 <View style={styles.bottomPadding} />
             </ScrollView>
 
-            {/* BOTTOM NAVIGATION */}
-            <View style={styles.bottomNav}>
-                <BlurView intensity={100} style={styles.bottomNavBlur}>
-                    {[
-                        { icon: 'home', label: 'Inicio', key: 'home' },
-                        { icon: 'compass', label: 'Explorar', key: 'explore' },
-                        { icon: 'heart', label: 'Favoritos', key: 'favorites' },
-                        { icon: 'person', label: 'Perfil', key: 'profile' },
-                    ].map((tab) => (
-                        <TouchableOpacity
-                            key={tab.key}
-                            style={styles.bottomNavItem}
-                            onPress={() => setActiveTab(tab.key)}
-                        >
-                            <Ionicons
-                                name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`}
-                                size={22}
-                                color={activeTab === tab.key ? '#10b981' : '#6b7280'}
-                            />
-                            <Text
-                                style={[
-                                    styles.bottomNavLabel,
-                                    activeTab === tab.key && styles.bottomNavLabelActive,
-                                ]}
-                            >
-                                {tab.label}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </BlurView>
-            </View>
-        </View>
+            {/* BOTTOM NAVIGATION */ }
+    <View style={styles.bottomNav}>
+        <BlurView intensity={100} style={styles.bottomNavBlur}>
+            {[
+                { icon: 'home', label: 'Inicio', key: 'home' },
+                { icon: 'compass', label: 'Explorar', key: 'explore', route: 'Attractives' }, // 👈 AGREGADO: ruta a Atractivos
+                { icon: 'heart', label: 'Favoritos', key: 'favorites', route: 'Favorites' }, // 👈 AGREGADO: ruta a Favoritos
+                //  { icon: 'person', label: 'Perfil', key: 'profile' },
+            ].map((tab) => (
+                <TouchableOpacity
+                    key={tab.key}
+                    style={styles.bottomNavItem}
+                    onPress={() => {
+                        if (tab.route) {
+                            navigation.navigate(tab.route); // 👈 AGREGADO: navegación si tiene ruta
+                        } else {
+                            setActiveTab(tab.key); // 👈 MANTIENE: cambio de tab normal
+                        }
+                    }}
+                >
+                    <Ionicons
+                        name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`}
+                        size={22}
+                        color={activeTab === tab.key ? '#10b981' : '#6b7280'}
+                    />
+                    <Text
+                        style={[
+                            styles.bottomNavLabel,
+                            activeTab === tab.key && styles.bottomNavLabelActive,
+                        ]}
+                    >
+                        {tab.label}
+                    </Text>
+                </TouchableOpacity>
+            ))}
+        </BlurView>
+    </View>
+        </View >
     );
 };
 
+// 📱 ESTILOS
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
     },
-
-    // HEADER STYLES
     header: {
         paddingTop: Platform.OS === 'ios' ? 50 : 30,
         paddingHorizontal: 20,
@@ -403,16 +456,12 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         color: '#1f2937',
     },
-
-    // SCROLL STYLES
     scrollView: {
         flex: 1,
     },
     scrollContent: {
         paddingBottom: 100,
     },
-
-    // QUICK INFO STYLES - CON SOPORTE PARA CLIMA
     quickInfoSection: {
         paddingVertical: 20,
     },
@@ -460,6 +509,7 @@ const styles = StyleSheet.create({
         elevation: 4,
         borderWidth: 1,
         borderColor: '#f1f5f9',
+        position: 'relative',
     },
     infoIcon: {
         width: 40,
@@ -485,8 +535,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         color: '#9ca3af',
     },
-
-    // MAIN SECTIONS STYLES - DISEÑO MINIMALISTA
+    refreshIndicator: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#f9fafb',
+        borderRadius: 8,
+        padding: 2,
+    },
     mainSectionsContainer: {
         paddingVertical: 20,
     },
@@ -496,11 +552,11 @@ const styles = StyleSheet.create({
     },
     sectionsGrid: {
         paddingHorizontal: 20,
-        gap: 20, // 👈 Más espacio entre cards
+        gap: 20,
     },
     sectionCard: {
-        height: 160, // 👈 Más alto para mostrar mejor las imágenes
-        borderRadius: 24, // 👈 Bordes más redondeados
+        height: 160,
+        borderRadius: 24,
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
@@ -527,8 +583,6 @@ const styles = StyleSheet.create({
         padding: 20,
         position: 'relative',
     },
-
-    // NUEVO DISEÑO DE BADGES
     sectionBadgeContainer: {
         alignSelf: 'flex-start',
     },
@@ -548,10 +602,8 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
     },
-
-    // TEXTO EN LA PARTE INFERIOR
     sectionTextContainer: {
-        marginTop: 'auto', // 👈 Empuja el texto hacia abajo
+        marginTop: 'auto',
     },
     sectionSubtitle: {
         fontSize: 12,
@@ -564,7 +616,7 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
     sectionTitle: {
-        fontSize: 22, // 👈 Más grande
+        fontSize: 22,
         fontWeight: '800',
         color: '#fff',
         marginBottom: 4,
@@ -580,8 +632,6 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 2,
     },
-
-    // FLECHA CON GLASSMORPHISM
     sectionArrow: {
         position: 'absolute',
         top: 20,
@@ -597,8 +647,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
     },
-
-    // FEATURED SECTION STYLES
     featuredSection: {
         paddingVertical: 20,
         paddingHorizontal: 20,
@@ -671,8 +719,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '500',
     },
-
-    // BOTTOM NAVIGATION STYLES
     bottomNav: {
         position: 'absolute',
         bottom: 0,
@@ -700,11 +746,10 @@ const styles = StyleSheet.create({
     bottomNavLabelActive: {
         color: '#10b981',
     },
-
-    // UTILS
     bottomPadding: {
         height: 40,
     },
 });
 
+// ✅ EXPORTACIÓN DEFAULT CORRECTA
 export default HomeScreen;
