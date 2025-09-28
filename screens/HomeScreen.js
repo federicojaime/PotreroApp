@@ -257,7 +257,7 @@ const HomeScreen = ({ navigation }) => {
 
             {/* HEADER */}
             <View style={styles.header}>
-                   {/*<View style={styles.headerTop}>
+                {/*<View style={styles.headerTop}>
                     <View style={styles.locationContainer}>
                         <Ionicons name="location" size={16} color="#10b981" />
                         <Text style={styles.locationText}>Potrero de los Funes</Text>
@@ -308,6 +308,7 @@ const HomeScreen = ({ navigation }) => {
                 </View>
 
                 {/* MAIN SECTIONS */}
+
                 <View style={styles.mainSectionsContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionHeaderTitle}>Explorá Potrero</Text>
@@ -361,43 +362,43 @@ const HomeScreen = ({ navigation }) => {
                 <View style={styles.bottomPadding} />
             </ScrollView>
 
-            {/* BOTTOM NAVIGATION */ }
-    <View style={styles.bottomNav}>
-        <BlurView intensity={100} style={styles.bottomNavBlur}>
-            {[
-                { icon: 'home', label: 'Inicio', key: 'home' },
-                { icon: 'compass', label: 'Explorar', key: 'explore', route: 'Attractives' }, // 👈 AGREGADO: ruta a Atractivos
-                { icon: 'heart', label: 'Favoritos', key: 'favorites', route: 'Favorites' }, // 👈 AGREGADO: ruta a Favoritos
-                //  { icon: 'person', label: 'Perfil', key: 'profile' },
-            ].map((tab) => (
-                <TouchableOpacity
-                    key={tab.key}
-                    style={styles.bottomNavItem}
-                    onPress={() => {
-                        if (tab.route) {
-                            navigation.navigate(tab.route); // 👈 AGREGADO: navegación si tiene ruta
-                        } else {
-                            setActiveTab(tab.key); // 👈 MANTIENE: cambio de tab normal
-                        }
-                    }}
-                >
-                    <Ionicons
-                        name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`}
-                        size={22}
-                        color={activeTab === tab.key ? '#10b981' : '#6b7280'}
-                    />
-                    <Text
-                        style={[
-                            styles.bottomNavLabel,
-                            activeTab === tab.key && styles.bottomNavLabelActive,
-                        ]}
-                    >
-                        {tab.label}
-                    </Text>
-                </TouchableOpacity>
-            ))}
-        </BlurView>
-    </View>
+            {/* BOTTOM NAVIGATION */}
+            <View style={styles.bottomNav}>
+                <BlurView intensity={100} style={styles.bottomNavBlur}>
+                    {[
+                        { icon: 'home', label: 'Inicio', key: 'home' },
+                        { icon: 'compass', label: 'Explorar', key: 'explore', route: 'Attractives' }, // 👈 AGREGADO: ruta a Atractivos
+                        { icon: 'heart', label: 'Favoritos', key: 'favorites', route: 'Favorites' }, // 👈 AGREGADO: ruta a Favoritos
+                        //  { icon: 'person', label: 'Perfil', key: 'profile' },
+                    ].map((tab) => (
+                        <TouchableOpacity
+                            key={tab.key}
+                            style={styles.bottomNavItem}
+                            onPress={() => {
+                                if (tab.route) {
+                                    navigation.navigate(tab.route); // 👈 AGREGADO: navegación si tiene ruta
+                                } else {
+                                    setActiveTab(tab.key); // 👈 MANTIENE: cambio de tab normal
+                                }
+                            }}
+                        >
+                            <Ionicons
+                                name={activeTab === tab.key ? tab.icon : `${tab.icon}-outline`}
+                                size={22}
+                                color={activeTab === tab.key ? '#10b981' : '#6b7280'}
+                            />
+                            <Text
+                                style={[
+                                    styles.bottomNavLabel,
+                                    activeTab === tab.key && styles.bottomNavLabelActive,
+                                ]}
+                            >
+                                {tab.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </BlurView>
+            </View>
         </View >
     );
 };
@@ -464,6 +465,7 @@ const styles = StyleSheet.create({
     },
     quickInfoSection: {
         paddingVertical: 20,
+        paddingBottom: 10,
     },
     infoSectionHeader: {
         flexDirection: 'row',
@@ -544,6 +546,7 @@ const styles = StyleSheet.create({
         padding: 2,
     },
     mainSectionsContainer: {
+        
         paddingVertical: 20,
     },
     sectionHeader: {

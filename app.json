@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "PotreroApp",
-    "slug": "PotreroApp",
+    "name": "Potrero de los Funes",
+    "slug": "potrero-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,6 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -20,10 +23,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.potreroapp.turismo",
+      "versionCode": 2,
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "98caa05c-1cce-424a-acde-94cf64e1a49d"
+      }
+    },
+    "plugins": [
+      "expo-asset"
+    ]
   }
 }

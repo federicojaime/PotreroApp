@@ -15,6 +15,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import lagoPotrero from '../assets/images/lago-potrero.jpg';
+import sierras from '../assets/images/sierras.jpg';
+import valle from '../assets/images/valle.jpg';
 
 const { width, height } = Dimensions.get('window');
 
@@ -53,11 +56,8 @@ const WelcomeScreen = ({ navigation }) => {
     };
 
     // Hero images que van rotando - IMÁGENES REALES DE POTRERO
-    const heroImages = [
-        require('../assets/images/lago-potrero.jpg'), // 👈 Imagen real del lago
-        require('../assets/images/sierras.jpg'), // 👈 Imagen real de las sierras
-        require('../assets/images/valle.jpg'), // 👈 Imagen real del valle
-    ];
+    const heroImages = [lagoPotrero, sierras, valle];
+
 
     // Rotación automática de imágenes cada 5 segundos
     useEffect(() => {
